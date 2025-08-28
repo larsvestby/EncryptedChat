@@ -1,0 +1,19 @@
+﻿namespace EncryptedChat.Models
+{
+    public class ChatEntity
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Owner/Creator of the chat
+        public Guid OwnerId { get; set; }
+        public UserEntity Owner { get; set; } = null!;
+
+        // Participants (many-to-many relationship)
+        public ICollection<UserEntity> Participants { get; set; } = new List<UserEntity>();
+
+        // Messages in the chat
+        public ICollection<MessageEntity> Messages { get; set; } = new List<MessageEntity>();
+    }
+}
