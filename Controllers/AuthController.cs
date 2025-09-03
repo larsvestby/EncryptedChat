@@ -1,11 +1,13 @@
 ﻿using EncryptedChat.DTOs;
 using EncryptedChat.Models;
 using EncryptedChat.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+
 
 namespace EncryptedChat.Controllers
 {
@@ -22,12 +24,23 @@ namespace EncryptedChat.Controllers
             _configuration = configuration;
         }
 
+        // Add this endpoint to AuthController
+        [HttpGet("public-key/{userId}")]
+        public async Task<IActionResult> GetPublicKey(Guid userId)
+        {
+            var user = await _authService.GetUserById(userId);
+            if (user == null)
+                return NotFound("User not found");
+
+            return Ok(new { PublicKey = user.PublicKey });
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegistrationDto registration)
         {
             try
             {
-                var user = await _authService.RegisterUser(
+                var (user, encryptedPrivateKey) = await _authService.RegisterUser(
                     registration.Username,
                     registration.Email,
                     registration.Password,
@@ -36,11 +49,18 @@ namespace EncryptedChat.Controllers
                 );
 
                 var token = GenerateJwtToken(user);
-                return Ok(new { Token = token, Message = "User registered successfully" });
+
+                // Return the encrypted private key to the client for storage
+                return Ok(new
+                {
+                    Token = token,
+                    EncryptedPrivateKey = encryptedPrivateKey,
+                    Message = "User registered successfully"
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { Message = ex.Message });
+                return BadRequest(new { ex.Message });
             }
         }
 
@@ -56,7 +76,6 @@ namespace EncryptedChat.Controllers
             return Ok(new { Token = token });
         }
 
-
         private string GenerateJwtToken(UserEntity user)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
@@ -64,14 +83,14 @@ namespace EncryptedChat.Controllers
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
+                Subject = new ClaimsIdentity(
+                [
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.GivenName, user.FirstName),
                     new Claim(ClaimTypes.Surname, user.LastName)
-                }),
+                ]),
                 Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(jwtSettings["ExpirationHours"])),
                 Issuer = jwtSettings["Issuer"],
                 Audience = jwtSettings["Audience"],

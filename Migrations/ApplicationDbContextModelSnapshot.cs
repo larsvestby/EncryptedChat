@@ -73,6 +73,10 @@ namespace EncryptedChat.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Iv")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid>("SenderId")
                         .HasColumnType("uniqueidentifier");
 
@@ -88,7 +92,7 @@ namespace EncryptedChat.Migrations
                     b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("EncryptedChat.Models.UserEntity", b =>
+            modelBuilder.Entity("UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -101,6 +105,10 @@ namespace EncryptedChat.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EncryptedPrivateKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -110,6 +118,10 @@ namespace EncryptedChat.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PublicKey")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -134,7 +146,7 @@ namespace EncryptedChat.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EncryptedChat.Models.UserEntity", null)
+                    b.HasOne("UserEntity", null)
                         .WithMany()
                         .HasForeignKey("ParticipantsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -143,7 +155,7 @@ namespace EncryptedChat.Migrations
 
             modelBuilder.Entity("EncryptedChat.Models.ChatEntity", b =>
                 {
-                    b.HasOne("EncryptedChat.Models.UserEntity", "Owner")
+                    b.HasOne("UserEntity", "Owner")
                         .WithMany("OwnedChats")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -160,7 +172,7 @@ namespace EncryptedChat.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EncryptedChat.Models.UserEntity", "Sender")
+                    b.HasOne("UserEntity", "Sender")
                         .WithMany("Messages")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -176,7 +188,7 @@ namespace EncryptedChat.Migrations
                     b.Navigation("Messages");
                 });
 
-            modelBuilder.Entity("EncryptedChat.Models.UserEntity", b =>
+            modelBuilder.Entity("UserEntity", b =>
                 {
                     b.Navigation("Messages");
 
